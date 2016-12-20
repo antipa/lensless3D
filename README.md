@@ -1,6 +1,8 @@
 # 
 3D lensless deconvolution code
 
+Currently this code is intended to run on a gpu with matlab's parallel computing toolbox. If you want to run without a gpu, you may need to remove the gpuArray calls that show up in the code. I have not tested this on a cpu!!
+
 This code deconvolve a 3D volume from a single 2D measurement. It contains the forward and adjoint operators, 
 as well as nonnegative soft thresholding. It is intended to be used in a proximal gradient descent scheme. 
 It requires having a depth-dependent on-axis PSF stored in a 3D array where the x and y dimensions are dimensions 
