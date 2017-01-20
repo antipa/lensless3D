@@ -1,6 +1,5 @@
 f = 7.5; %Focal length of each lenslet
 cpx = .0065; %Camera pixel size in microns
-sensor_pix = [1000 1200];
 sensor_size = [2048*cpx 2560*cpx];  %mm
 mask_pix = [600 800];
 mask_size = mask_pix*cpx; %mm
