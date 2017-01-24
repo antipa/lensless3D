@@ -1,3 +1,32 @@
+% %% Setup simulation grid and camera grid
+% camera.resolution = [2048/2 2560/2];   %Size of camera in pixels
+% camera.px = 6.5e-3*2;    %Pixel size in [physical_units]/pixel
+% camera.units = 'mm';   %Physical units
+% camera.resample = @(x)imresize(x,camera.resolution,'box');  %Method to resample onto camera pixel grid
+% camera.size = camera.resolution*camera.px;    %Physical extent of sensor
+% 
+% opticSurf(1).resolution = 3*camera.resolution;   %Mask-modeling grid
+% opticSurf(1).px = camera.size./mask.resoluion;   %mask pixel size determined from camera extent
+% opticSurf(1).t = .8;    %Propagation distance from mask to sensor
+% opticSurf(1).n = 1.61;
+% opticSurf(1).z = zeros(mask.resolution);   %Surface height on x-y grid
+% opticSurf(1).amp = ones(mask.resolution);  %Transmission mask
+% opticSurf(1).transmit_field = @(u).opticSurf(1).amp.*u.*
+% 
+% opticSurf(2) = opticSurf(1);   %Inheret properties from input surface
+% %Modify relevant ones
+% opticSurf(2).t = 10;
+% opticSurf(2).n = 1;
+% opticSurf(2).type = 'randomLenslets';
+% opticSurf(2).f = 7.5;    %Set focal length of features
+% opticSurf(2).NA = .05;   %Set NA (or average NA) of features
+% opticSurf(2).amp = (-opticSurf)*()';
+
+
+
+
+
+
 f = 7.5; %Focal length of each lenslet
 cpx = .0065; %Camera pixel size in microns
 sensor_pix = [1000 1200];
