@@ -3,15 +3,17 @@ h_in = load('Y:\Grace\pco_color_dense\zstack.mat','zstackg');
 %%
 gputrue = 1;
 ht = double(h_in.zstackg);
-ds = 1/4;
-dsz = 1/10;
+ds = 1/2;
+dsz = 1/4;
+start_plane = 64;
+start_ds = start_plane*dsz;
 P = floor(size(ht,3)*dsz*1);
-htd = zeros(size(ht,1),size(ht,2),P);
+htd = zeros(size(ht,1),size(ht,2),P-start_plane*dsz);
 count = 0;
-for k = 1:P   %Downsample in z. This leaves of remainders intead of using them!
+for k = 1:(P-start_ds)   %Downsample in z. This leaves of remainders intead of using them!
     for n = 1:1/dsz
         count = count+1;
-        htd(:,:,k) = htd(:,:,k)+ht(:,:,count)*ds;
+        htd(:,:,k) = htd(:,:,k)+ht(:,:,count+start_plane)*ds;
     end
     
 end
@@ -22,12 +24,12 @@ imtest = imresize(htd(:,:,1),ds,'box');
 h = zeros(M,N,size(htd,3));
 
 
-for m = 1:P
+for m = 1:P-start_ds;
     
     h(:,:,m) = imresize(htd(:,:,m),ds,'box')-100;
-    if m == 1;
-        divide_norm = norm(h(:,:,1),'fro');
-    end
+    %if m == 1
+        divide_norm = norm(h(:,:,m),'fro');
+    %end
     h(:,:,m) = h(:,:,m)/divide_norm;
     %imagesc(h(:,:,m))
     %axis image
@@ -101,20 +103,14 @@ end
 GradErrHandle = @(x) linear_gradient(x,A3d,Aadj_3d,b);
 
 % Prox handle
-    tau = .02;
+    tau = .3;
     %good tau: .0005 for usaf targets
     %tau_final = .001
 prox_handle = @(x)soft_nonneg(x,tau);
 %tvdenoise_handle = @(x)tvdenoise_dim3(x,2/tau,8,1,1);
 %prox_handle = @(x)tvdenoise_dim3_wrapper(tvdenoise_handle,x);
 %prox_handle = @(x)hard_3d(x,tau);
-%Start: %options.stepsize = .0000004;
-%Stepsize for final .00002
-%Set size at end options.stepsize = .00007;
-%Initial stepsize: options.stepsize = .0000004;
-%options.stepsize = .0000015;  Good ending for fern
-%options.stepsize = .0000004;  Use this for starting with ds = 1/2;
-%options.stepsize = 24e-8; %start big one here
+
 if ds == 1/5
     options.stepsize = 30e-6;
 elseif ds == 1/4
@@ -123,12 +119,17 @@ elseif ds == 1/4
 elseif ds == 1/10
     options.stepsize = 8e-5;
 elseif ds == 1/2
-    options.stepsize = 1e-6;
+    %options.stepsize = 1e-6;
+    if dsz == 1/8
+        options.stepsize = 1e-6;
+    elseif dsz == 1/4
+        options.stepsize = 1e-6;
+    end
 end
 
 options.convTol = 8.2e-14;
 %options.xsize = [256,256];
-options.maxIter = 1500;
+options.maxIter = 10000;
 options.residTol = .2;
 options.momentum = 'nesterov';
 options.disp_figs = 1;
@@ -136,12 +137,13 @@ options.disp_fig_interval = 20;   %display image this often
 options.xsize = size(h);
 nocrop = @(x)x;
 options.disp_crop = @(x)gather(real(sum(x,3)));
-h1 = figure(1),clf
+h1 = figure(1);
+clf
 options.fighandle = h1;
 options.disp_gamma = 1/2.2;
 options.known_input = 0;
 options.force_real = 1;
-init_style = 'zero';
+init_style = 'xhat';
 
 
 switch lower(init_style)
