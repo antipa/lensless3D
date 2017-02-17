@@ -1,5 +1,6 @@
 %Load impulse response stack, h
-h_in = load('Y:\Grace\pco_color_dense\zstack.mat','zstackg');
+%h_in = load('Y:\Grace\pco_color_dense\zstack.mat','zstackg');
+h_in = load('E:\data\zstack.mat','zstackg');
 %%
 gputrue = 1;
 ht = double(h_in.zstackg);
@@ -88,7 +89,7 @@ switch lower(meas_type)
         b = b + abs(randn(size(b)))*max(b(:))/100;
     case 'measured'
        % bin = double(imread('Y:Diffusers''nstuff\Color_pco_3d_images\microcontroller\microcontroller_1.png'));
-       bin = double(imread('Y:\Grace\robin\fern2.png'));
+       bin = double(imread('E:\data\fern2.png'));
         %bin = double(imread('Y:\Diffusers''nstuff\3d_images_to_process\succulant_2.png'));
         b = (imresize(bin,ds/2,'box'));
         if gputrue
@@ -107,8 +108,10 @@ GradErrHandle = @(x) linear_gradient(x,A3d,Aadj_3d,b);
     %good tau: .0005 for usaf targets
     %tau_final = .001
 %prox_handle = @(x)soft_nonneg(x,tau);
+
 niters = 8;
-prox_handle = @(x)tvdenoise3d_wrapper(max(x-.1,0),tau,niters,0,inf);
+prox_handle = @(x)tvdenoise3d_wrapper(max(x-.01,0),tau,niters,0,inf);
+
 %tvdenoise_handle = @(x)tvdenoise_dim3(x,2/tau,8,1,1);
 %prox_handle = @(x)tvdenoise_dim3_wrapper(tvdenoise_handle,x);
 %prox_handle = @(x)hard_3d(x,tau);
@@ -133,7 +136,7 @@ end
 
 options.convTol = 8.2e-14;
 %options.xsize = [256,256];
-options.maxIter = 1000;
+options.maxIter = 2000;
 options.residTol = .2;
 options.momentum = 'nesterov';
 options.disp_figs = 1;
