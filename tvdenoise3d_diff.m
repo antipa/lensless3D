@@ -38,54 +38,35 @@ function u = tvdenoise3d_diff(f,lambda,iters,ng)
 %  (stopping rule: iters)
 %
 
-% Last modified by Lei Tian
-tau3 = 5;
+% Last modified by Nick Antipa - use circshift instead!
+
 if lambda < 0
     error('Parameter lambda must be nonnegative.');
 end
 
-tau = 0.25;
+tau = 0.125;
 
 N = size(f);
-%id = [2:N(1),N(1)];
-%iu = [1,1:N(1)-1];
-%ir = [2:N(2),N(2)];
-%il = [1,1:N(2)-1];
-%ib = [2:N(3),N(3)];
-%ifr = [1,1:N(3)-1];
 
 p1 = zeros(size(f));
 p2 = zeros(size(f));
 p3 = zeros(size(f));
 
 divp = zeros(size(f));
-%lastdivp = ones(size(f));
 
 for i=1:iters
-    %lastdivp = divp;
-    
+   
     z = divp - f*lambda;
     
-    %z1 = z(:,ir,:) - z;
-    %z2 = z(id,:,:) - z;
-    %z3 = z(:,:,ib) - z;
-    %z1 = cat(2,diff(z,1,2),zeros(N(1),1,N(3)));
-    %z2 = cat(1,diff(z,1,1),zeros(1,N(2),N(3)));
-    %z3 = cat(3,diff(z,1,3),zeros(N(1),N(2)));
     z1 = circshift(z,[0 -1 0])-z;
     z2 = circshift(z,[-1 0 0])-z;
     z3 = circshift(z,[0 0 -1])-z;
-    denom = 1 + tau*sqrt(z1.^2 + z2.^2 + tau3^2*z3.^2);
+    denom = 1 + tau*sqrt(z1.^2 + z2.^2 + z3.^2);
     
     p1 = (p1 + tau*z1)./denom;
     p2 = (p2 + tau*z2)./denom;
-    p3 = (p3 + tau3*tau*z3)./denom;
+    p3 = (p3 + tau*z3)./denom;
 
-
-    %divp = p1 - p1(:,il,:) + p2 - p2(iu,:,:) + p3 - p3(:,:,ifr); % divergence
-    %divp = cat(2,zeros(N(1),1,N(3)),diff(p1,1,2)) + ...
-        %cat(1,zeros(1,N(2),N(3)),diff(p2,1,1)) + ...
-        %cat(3,zeros(N(1),N(2)),diff(p3,1,3));
     divp = p1 - circshift(p1,[0 1 0]) + ...
         p2 - circshift(p2,[1 0 0]) + ...
         p3 - circshift(p3,[0 0 1]);
@@ -96,8 +77,6 @@ u = f - divp/lambda;
 if ng
     u = max(0,u);
 end
-
-% threeslice(u,88);
 
 
 end

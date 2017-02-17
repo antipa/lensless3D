@@ -1,12 +1,10 @@
 %Load impulse response stack, h
-%h_in = load('Y:\Grace\pco_color_dense\zstack.mat','zstackg');
-h_in = load('E:\data\zstack.mat','zstackg');
+lensless3d_settings;  %Loads settings includnig file paths
+h_in = load(impulse_stack,stack_name);
 %%
-gputrue = 1;
+lensless3d_settings;
 ht = double(h_in.zstackg);
-ds = 1/2;
-dsz = 1/2;
-start_plane = 1;
+
 start_ds = ceil(start_plane*dsz);
 P = floor(size(ht,3)*dsz*1);
 htd = zeros(size(ht,1),size(ht,2),P-start_ds);
@@ -71,10 +69,11 @@ crop = @(x)x(rc,cc);
 A3d = @(x)A_lensless_3d(h,x,pad,crop,gputrue);
 
 % Define handle for A adjoint
-Aadj_3d = @(x)A_adj_lensless_3d(h,x,crop,pad,gputrue);
+%Aadj_3d = @(x)A_adj_lensless_3d(h,x,crop,pad,gputrue);
+Aadj_3d = @(x,Atb)A_adj_lensless_3d(h,x,crop,pad,gputrue);
 
 % Make or load sensor measurement
-meas_type = 'measured';
+
 switch lower(meas_type)
     case 'simulated'
         obj = gpuArray(zeros(size(h)));
@@ -88,67 +87,23 @@ switch lower(meas_type)
         b = A3d(obj);
         b = b + abs(randn(size(b)))*max(b(:))/100;
     case 'measured'
-       % bin = double(imread('Y:Diffusers''nstuff\Color_pco_3d_images\microcontroller\microcontroller_1.png'));
-       bin = double(imread('E:\data\fern2.png'));
-        %bin = double(imread('Y:\Diffusers''nstuff\3d_images_to_process\succulant_2.png'));
-        b = (imresize(bin,ds/2,'box'));
+        bin = imread(file_to_process);   %Read image
+        if demosaic_true
+            b = double(demosaic(bin,'rggb'));
+            b = mean(b,3);
+        else
+            b = double(bin);
+        end
+        b = (imresize(b,ds/2,'box'));   %Always downsample by 2
+        
+            
         if gputrue
             b = gpuArray(b);
         end
-        %b = b/norm(b(:));
-       % bin = load('Y:\Grace\simulated_data_better.mat');
-        %b = gpuArray(imresize(double(bin.data1),1/2,'box'));
 end
 
 % Define gradient handle
 GradErrHandle = @(x) linear_gradient(x,A3d,Aadj_3d,b);
-
-% Prox handle
-    tau = .00002;
-    %good tau: .0005 for usaf targets
-    %tau_final = .001
-%prox_handle = @(x)soft_nonneg(x,tau);
-niters = 4;
-%tvdenoise_handle = @(x)tvdenoise_dim3(x,2/tau,8,1,1);
-%prox_handle = @(x)tvdenoise_dim3_wrapper(tvdenoise_handle,x);
-%prox_handle = @(x)hard_3d(x,tau);
-
-if ds == 1/5
-    options.stepsize = 30e-6;
-elseif ds == 1/4
-    
-    options.stepsize = 1e-6;
-elseif ds == 1/10
-    options.stepsize = 8e-5;
-elseif ds == 1/2
-    %options.stepsize = 1e-6;
-    if dsz == 1/8
-        options.stepsize = 1e-6;
-    elseif dsz == 1/4
-        options.stepsize = 1e-6;
-    elseif dsz == 1/2
-        options.stepsize = .5e-6;
-    end
-end
-
-options.convTol = 8.2e-14;
-%options.xsize = [256,256];
-options.maxIter = 2000;
-options.residTol = .2;
-options.momentum = 'nesterov';
-options.disp_figs = 1;
-options.disp_fig_interval = 5;   %display image this often
-options.xsize = size(h);
-nocrop = @(x)x;
-options.disp_crop = @(x)gather(real(sum(x,3)));
-h1 = figure(1);
-clf
-options.fighandle = h1;
-options.disp_gamma = 1/2.2;
-options.known_input = 0;
-options.force_real = 1;
-init_style = 'xhat';
-
 
 switch lower(init_style)
     case('zero')
