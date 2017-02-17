@@ -32,13 +32,17 @@ function u = tvdenoise3d_diff(f,lambda,iters,ng)
 %   u = tvdenoise(f,12);
 %   subplot(1,2,1); imshow(f); title Input
 %   subplot(1,2,2); imshow(u); title Denoised
-
+%
+%   tau3: extra denoising factor for 3rd dimension. Denoising in 3rd
+%   dimension will be tau3-times as strong
+%
 % Pascal Getreuer 2007-2008
 %  Modified by Jose Bioucas-Dias  & Mario Figueiredo 2010
 %  (stopping rule: iters)
 %
 
 % Last modified by Nick Antipa - use circshift instead!
+
 
 if lambda < 0
     error('Parameter lambda must be nonnegative.');
