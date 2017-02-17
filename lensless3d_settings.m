@@ -4,8 +4,8 @@ catch
     gputrue = 0;
 end
 
-file_to_process = 'E:\data\fern2.png';   %Image to process
-impulse_stack = 'E:\data\zstack.mat';   %Mat file of impulse response
+file_to_process = 'Y:\Grace\robin\fern2.png';   %Image to process
+impulse_stack = 'Y:\Grace\pco_color_dense\zstack.mat';   %Mat file of impulse response
 stack_name = 'zstackg';  %Variable name within impulse_stack
 ds = 1/2;   %Lateral downsampling
 dsz = 1/2;   %Axial downsampling
