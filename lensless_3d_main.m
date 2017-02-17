@@ -88,7 +88,7 @@ switch lower(meas_type)
         b = b + abs(randn(size(b)))*max(b(:))/100;
     case 'measured'
        % bin = double(imread('Y:Diffusers''nstuff\Color_pco_3d_images\microcontroller\microcontroller_1.png'));
-       bin = double(imread('Y:\Grace\robin\fern4.png'));
+       bin = double(imread('Y:\Grace\robin\fern2.png'));
         %bin = double(imread('Y:\Diffusers''nstuff\3d_images_to_process\succulant_2.png'));
         b = (imresize(bin,ds/2,'box'));
         if gputrue
@@ -147,7 +147,7 @@ options.fighandle = h1;
 options.disp_gamma = 1/2.2;
 options.known_input = 0;
 options.force_real = 1;
-init_style = 'xhat';
+init_style = 'zero';
 
 
 switch lower(init_style)

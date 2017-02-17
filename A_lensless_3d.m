@@ -19,4 +19,4 @@ end
 for m = 1:size(h,3)
     B = B+fft2(pad(x(:,:,m))).*fft2(pad(h(:,:,m)));
 end
-b = real(crop(ifftshift(ifft2(B))));
+b = crop(ifftshift(real(ifft2(B))));

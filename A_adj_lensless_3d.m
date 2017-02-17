@@ -10,5 +10,5 @@ end
 Bp = fft2(pad(x));
 for m = 1:size(h,3)
     H = conj(fft2(pad(h(:,:,m))));
-    Atb(:,:,m) = real(crop(ifftshift(ifft2(H.*Bp))));
+    Atb(:,:,m) = crop(ifftshift(real(ifft2(H.*Bp))));
 end
