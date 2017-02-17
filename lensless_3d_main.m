@@ -103,12 +103,12 @@ end
 GradErrHandle = @(x) linear_gradient(x,A3d,Aadj_3d,b);
 
 % Prox handle
-    tau = .0002;
+    tau = .00001;
     %good tau: .0005 for usaf targets
     %tau_final = .001
 %prox_handle = @(x)soft_nonneg(x,tau);
 niters = 4;
-prox_handle = @(x)tvdenoise3d_wrapper(max(x-.01,0),tau,niters,0,inf);
+prox_handle = @(x)tvdenoise3d_wrapper(max(x-.08,0),tau,niters,0,inf);
 %tvdenoise_handle = @(x)tvdenoise_dim3(x,2/tau,8,1,1);
 %prox_handle = @(x)tvdenoise_dim3_wrapper(tvdenoise_handle,x);
 %prox_handle = @(x)hard_3d(x,tau);
@@ -147,7 +147,7 @@ options.fighandle = h1;
 options.disp_gamma = 1/2.2;
 options.known_input = 0;
 options.force_real = 1;
-init_style = 'zero';
+init_style = 'xhat';
 
 
 switch lower(init_style)

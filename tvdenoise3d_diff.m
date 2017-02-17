@@ -39,7 +39,7 @@ function u = tvdenoise3d_diff(f,lambda,iters,ng)
 %
 
 % Last modified by Lei Tian
-
+tau3 = 5;
 if lambda < 0
     error('Parameter lambda must be nonnegative.');
 end
@@ -75,11 +75,11 @@ for i=1:iters
     z1 = circshift(z,[0 -1 0])-z;
     z2 = circshift(z,[-1 0 0])-z;
     z3 = circshift(z,[0 0 -1])-z;
-    denom = 1 + tau*sqrt(z1.^2 + z2.^2 + 5*z3.^2);
+    denom = 1 + tau*sqrt(z1.^2 + z2.^2 + tau3^2*z3.^2);
     
     p1 = (p1 + tau*z1)./denom;
     p2 = (p2 + tau*z2)./denom;
-    p3 = (p3 + 5*tau*z3)./denom;
+    p3 = (p3 + tau3*tau*z3)./denom;
 
 
     %divp = p1 - p1(:,il,:) + p2 - p2(iu,:,:) + p3 - p3(:,:,ifr); % divergence
