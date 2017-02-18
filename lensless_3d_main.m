@@ -2,6 +2,7 @@
 lensless3d_settings;  %Loads settings includnig file paths
 h_in = load(impulse_stack,stack_name);
 %%
+
 lensless3d_settings;
 ht = double(h_in.zstackg);
 
@@ -51,9 +52,9 @@ end
 %%
 %define problem size
 NX = size(h,2);
-NY = size(h,2);
+NY = size(h,1);
 NZ = size(h,3);
-
+options.xsize = size(h);
 %define crop and pad operators to handle 2D fft convolution
 pad = @(x)padarray(x,[size(h,1)/2,size(h,2)/2],0,'both');
 if gputrue

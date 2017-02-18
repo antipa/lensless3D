@@ -3,13 +3,13 @@ try gpuDevice
 catch
     gputrue = 0;
 end
-
-file_to_process = 'Y:\Grace\robin\fern2.png';   %Image to process
-impulse_stack = 'Y:\Grace\pco_color_dense\zstack.mat';   %Mat file of impulse response
+%
+file_to_process = 'E:\data\usaf_tilt_reverse.png';   %Image to process
+impulse_stack = 'E:\data\zstack.mat';   %Mat file of impulse response
 stack_name = 'zstackg';  %Variable name within impulse_stack
-ds = 1/2;   %Lateral downsampling
+ds = 1;   %Lateral downsampling
 dsz = 1/2;   %Axial downsampling
-start_plane = 1;   %Which z plane to begin impulse response
+start_plane = 60;   %Which z plane to begin impulse response
 meas_type = 'measured';   %Measured or simulated data. If measured, 
                           %file_to_process will be loaded. if not, 
                           %data will be simulated.
@@ -42,7 +42,10 @@ elseif ds == 1/2
     elseif dsz == 1/2
         options.stepsize = .5e-6;
     end
+elseif ds == 1
+    options.stepsize = 3e-7;
 end
+
 
 options.convTol = 8.2e-14;
 %options.xsize = [256,256];
@@ -50,8 +53,8 @@ options.maxIter = 2000;
 options.residTol = .2;
 options.momentum = 'nesterov';
 options.disp_figs = 1;
-options.disp_fig_interval = 5;   %display image this often
-options.xsize = size(h);
+options.disp_fig_interval = 1;   %display image this often
+
 nocrop = @(x)x;
 options.disp_crop = @(x)gather(real(sum(x,3)));
 h1 = figure(1);
@@ -60,4 +63,4 @@ options.fighandle = h1;
 options.disp_gamma = 1/2.2;
 options.known_input = 0;
 options.force_real = 1;
-init_style = 'xhat';
+init_style = 'zero';   %Initialization
