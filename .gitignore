@@ -1,2 +1,10 @@
 lensless_3d_main.m
+<<<<<<< HEAD
 *.mat
+=======
+*.asv
+*.asv
+lensless3d_settings.m
+>>>>>>> origin/master
+
+*.asv

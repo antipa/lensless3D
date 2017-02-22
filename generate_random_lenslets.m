@@ -1,4 +1,4 @@
-% %% Setup simulation grid and camera grid
+%% Setup simulation grid and camera grid
 % camera.resolution = [2048/2 2560/2];   %Size of camera in pixels
 % camera.px = 6.5e-3*2;    %Pixel size in [physical_units]/pixel
 % camera.units = 'mm';   %Physical units
@@ -26,8 +26,9 @@
 
 
 
+lenslet_distribution = 'poisson';
 lambda = 550e-6;
-f = 3.5; %Focal length of each lenslet
+f = 7.5; %Focal length of each lenslet
 cpx = .0065; %Camera pixel size in microns
 sensor_pix = [1000 1200];
 sensor_size = [2048*cpx 2560*cpx];  %mm
@@ -36,10 +37,36 @@ mask_size = mask_pix*cpx; %mm
 upsample = 3;   %how much to upsample for propagation
 subsiz = upsample*mask_pix;  %Size of CA in pixels
 px = mask_size(1)/subsiz(1);
+Res = .03; %Resolution desired
+%R = 1.22 * lambda * Fnum;
+Fnum = Res/1.22/lambda;
+%Fnum = obj_dist/D_mean
+obj_dist = 15; %Distance to center of object
+D_mean = obj_dist/Fnum;
+im_dist = 1/(1/f-1/obj_dist);
+
+
+%%
+lenslet_distribution = 'uniform';
+switch lower(lenslet_distribution)
+    case('uniform')
+        nlenslets = round(prod(mask_size/D_mean));
+        lens_centers = randsample(subsiz(1)*subsiz(2),nlenslets);
+        [rows,cols] = ind2sub(subsiz,lens_centers);
+    case('poisson')
+        pts = poissonDisc(subsiz,D_mean/px*2/3,0,0);
+        rows = pts(:,1);
+        cols = pts(:,2);
+        nlenslets = numel(rows);
+end
+
+%%
+
 
 nlenslets = 500;
 lens_centers = randsample(subsiz(1)*subsiz(2),nlenslets);
 [rows,cols] = ind2sub(subsiz,lens_centers);
+
 index = 1.51;
 index_prime = 1;
 dn = index_prime-index;
@@ -61,7 +88,7 @@ x0 = (pts - floor(subsiz/2))*px;
 
 sph = @(x0,y0,R)sqrt(R^2-(Xs-x0).^2 - (Ys-y0).^2);
 
-%%
+
 lenslet_surface = zeros(subsiz);
 for n = 1:length(pts)
     zt = sph(x0(n,2),x0(n,1),R);
@@ -81,6 +108,7 @@ end
 %%
 
 Ui = exp(-1i*2*pi*dn/lambda * lenslet_surface);
+
 prepad = floor(subsiz/2);
 Ui = padarray(Ui,prepad,'both');
 siz = size(Ui);
@@ -109,10 +137,13 @@ if gpu
     Ui = gpuArray(Ui);
     sphase = gpuArray(sphase);
     % Istack = gpuArray(zeros(siz(1),siz(2),length(zvec)));
+    sphase = gpuArray(sqrt(1-(lambda*Fx).^2 - (lambda*Fy).^2));
 end
 
 
+
 zvec = f;
+
 
 
 for Z = zvec
