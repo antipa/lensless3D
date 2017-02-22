@@ -24,9 +24,9 @@ imtest = imresize(htd(:,:,1),ds,'box');
 h = zeros(M,N,size(htd,3));
 
 
-for m = 1:P-start_ds;
+for m = 1:P-start_ds
     
-    h(:,:,m) = imresize(htd(:,:,m),ds,'box')-100;
+    h(:,:,m) = imresize(htd(:,:,m)-mean2(htd(1:100,1:100,m)),ds,'box'); 
     %if m == 1
         divide_norm = norm(h(:,:,m),'fro');
     %end
@@ -91,11 +91,12 @@ switch lower(meas_type)
         bin = imread(file_to_process);   %Read image
         if demosaic_true
             b = double(demosaic(bin,'rggb'));
-            b = mean(b,3);
+            %b = mean(b,3);
+            b = b(:,:,2);
         else
             b = double(bin);
         end
-        b = (imresize(b,ds/2,'box'));   %Always downsample by 2
+        b = (imresize(b,ds/2,'box'))-300;   %Always downsample by 2
         
             
         if gputrue
