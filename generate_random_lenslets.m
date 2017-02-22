@@ -1,33 +1,15 @@
-%% Setup simulation grid and camera grid
-% camera.resolution = [2048/2 2560/2];   %Size of camera in pixels
-% camera.px = 6.5e-3*2;    %Pixel size in [physical_units]/pixel
-% camera.units = 'mm';   %Physical units
-% camera.resample = @(x)imresize(x,camera.resolution,'box');  %Method to resample onto camera pixel grid
-% camera.size = camera.resolution*camera.px;    %Physical extent of sensor
-% 
-% opticSurf(1).resolution = 3*camera.resolution;   %Mask-modeling grid
-% opticSurf(1).px = camera.size./mask.resoluion;   %mask pixel size determined from camera extent
-% opticSurf(1).t = .8;    %Propagation distance from mask to sensor
-% opticSurf(1).n = 1.61;
-% opticSurf(1).z = zeros(mask.resolution);   %Surface height on x-y grid
-% opticSurf(1).amp = ones(mask.resolution);  %Transmission mask
-% opticSurf(1).transmit_field = @(u).opticSurf(1).amp.*u.*
-% 
-% opticSurf(2) = opticSurf(1);   %Inheret properties from input surface
-% %Modify relevant ones
-% opticSurf(2).t = 10;
-% opticSurf(2).n = 1;
-% opticSurf(2).type = 'randomLenslets';
-% opticSurf(2).f = 7.5;    %Set focal length of features
-% opticSurf(2).NA = .05;   %Set NA (or average NA) of features
-% opticSurf(2).amp = (-opticSurf)*()';
-
-
-
-
 lenslet_distribution = 'poisson';
-lambda = 550e-6;
-f = 7.5; %Focal length of each lenslet
+% Calculate lenslet focal length so that middle of volume images to sensor
+phi = linspace(0,1,10001);   
+l1 = 1/z2i;
+l2 = 1/z1i;
+% The +ve solution to this causes the extremal planes of the volume to be
+% defocused by the same magnitude on either side of the focal plane
+grossness = 2*Z*phi.^2+(2*Z*(l1+l2)-2)*phi + l1*l2*2*Z-l1-l2; 
+[~,idx] = min(abs(grossness));                       
+phi_star = phi(idx);
+%%
+f = 1/phi_star; %Focal length of each lenslet
 cpx = .0065; %Camera pixel size in microns
 sensor_pix = [1000 1200];
 sensor_size = [2048*cpx 2560*cpx];  %mm
