@@ -11,7 +11,7 @@ z2 = -min(zin.z);
 
 f = 2/(-1/z1-1/z2);
 wx = 7;   %Width of aperture in mm
-wy = 5;   %Height of aperture in mm
+wy = 7;   %Height of aperture in mm
 
 lens_ca = sqrt(wx^2+wy^2);
 fno = f/lens_ca;
@@ -33,17 +33,60 @@ px = lambda_max/2;   %Propagation pixel size, account for diagonal
 
 
 
-%% Create grid at mask using the computed pixel size
-%% Propagate
-
+%% Setup camera specs
+sensor_ds = 1/4;
+cpx = .0065/sensor_ds; %Camera pixel size in microns
+sensor_pix = [2048 2048]*sensor_ds;   %number of pixels
+sensor_size = sensor_pix*cpx;   %mm
 zi_vec = 1./(1./zin.z-1/f);   %Apparent position of z1
 Z = 10;  %mask-sensor distance
-sensor_px = 6.5e-3;   %Sensor pixel size -- must resample after propagation
+%% Create random lenslet surface
+
+% Find the optimal lenslet focal length such that the image of the point
+% sources through the main lens is defocused symmetrically about the
+% sensor. This is found by solving the polynomial
+% phi_star = argmin(2*Z*phi.^2 + (2*Z*(l1+l2)-2)*phi + l1*l2*2*Z-l1-l2); 
+% s.t. phi_star > 0;
+l1 = 1/z2i;
+l2 = 1/z1i;
+a = 2*Z;
+b = (2*Z*(l1+l2)-2);
+c = l1*l2*2*Z-l1-l2;
+phi_start = (-b+sqrt(b^2-4*a*c))/(2*a);
+f_micro = 1/phi_star;   %Lens focal length     
+
+% Now that focal length is known, compute the average aperture
+% Need to take into account magnification?
+Res = .03;   %Desired object-space resolution
+Res_main1 = Res*Z/abs(z1);   %Spot size at sensor
+Res_main2 = Res*Z/abs(z2);
+Fnum1 = Res_main1/1.22/lambda;
+Fnum2 = Res_main2/1.22/lambda;
+D1 = f_micro/Fnum1;
+D2 = f_micro/Fnum2;
+D_mean = D1/2+D2/2;
+
+switch lower(lenslet_distribution)
+    case('uniform')
+        nlenslets = round(prod(mask_size/D_mean));
+        lens_centers = randsample(subsiz(1)*subsiz(2),nlenslets);
+        [rows,cols] = ind2sub(subsiz,lens_centers);
+    case('poisson')
+        pts = poissonDisc(subsiz,D_mean/px*2/3,0,0);
+        rows = pts(:,1);
+        cols = pts(:,2);
+        nlenslets = numel(rows);
+end
+%% Propagate
+
+
 
 thetax_max = atan(wx/2/abs(z2i));
 thetay_max = atan(wy/2/abs(z2i));
-W = wx+2*Z*tan(thetax_max)*1.8;   %Include fudge factor for extra padding
-H = wy+2*Z*tan(thetay_max)*1.8;
+%W = wx+2*Z*tan(thetax_max)*1.8;   %Include fudge factor for extra padding
+%H = wy+2*Z*tan(thetay_max)*1.8;
+W = sensor_size(2);
+H = sensor_size(1);
 %Make Wr have even number of samples
 Wr = floor(W/px/2)*2*px;
 Hr = floor(H/px/2)*2*px;

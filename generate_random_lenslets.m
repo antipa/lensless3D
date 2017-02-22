@@ -1,18 +1,23 @@
 lenslet_distribution = 'poisson';
 % Calculate lenslet focal length so that middle of volume images to sensor
-phi = linspace(0,1,10001);   
+
 l1 = 1/z2i;
 l2 = 1/z1i;
 % The +ve solution to this causes the extremal planes of the volume to be
 % defocused by the same magnitude on either side of the focal plane
-grossness = 2*Z*phi.^2+(2*Z*(l1+l2)-2)*phi + l1*l2*2*Z-l1-l2; 
-[~,idx] = min(abs(grossness));                       
-phi_star = phi(idx);
+% lenslet_power = 2*Z*phi.^2+(2*Z*(l1+l2)-2)*phi + l1*l2*2*Z-l1-l2; 
+a = 2*Z;
+b = (2*Z*(l1+l2)-2);
+c = l1*l2*2*Z-l1-l2;
+phi_start = (-b+sqrt(b^2-4*a*c))/(2*a);
+%[~,idx] = min(abs(lenslet_power));                       
+%phi_star = phi(idx);
 %%
-f = 1/phi_star; %Focal length of each lenslet
-cpx = .0065; %Camera pixel size in microns
-sensor_pix = [1000 1200];
-sensor_size = [2048*cpx 2560*cpx];  %mm
+f_micro = 1/phi_star; %Focal length of each lenslet
+sensor_ds = 1/4;
+cpx = .0065/sensor_ds; %Camera pixel size in microns
+sensor_pix = [2048 2560]*sensor_ds;   %number of pixels
+sensor_size = sensor_pix*cpx;   %mm
 mask_pix = [600 800];
 mask_size = mask_pix*cpx; %mm
 upsample = 3;   %how much to upsample for propagation
@@ -24,7 +29,7 @@ Fnum = Res/1.22/lambda;
 %Fnum = obj_dist/D_mean
 obj_dist = 15; %Distance to center of object
 D_mean = obj_dist/Fnum;
-im_dist = 1/(1/f-1/obj_dist);
+im_dist = 1/(1/f_micro-1/obj_dist);
 
 
 %%
@@ -46,7 +51,7 @@ end
 index = 1.51;
 index_prime = 1;
 dn = index_prime-index;
-R = f*dn;
+R = f_micro*dn;
 %Sphere: z = sqrt(1-(x-x0)^2/R^2 + (y-y0)^2/R^2)
 suby = linspace(-floor(subsiz(1)/2)*px,floor(subsiz(1)/2)*px,subsiz(1));
 subx = linspace(-floor(subsiz(2)/2)*px,floor(subsiz(2)/2)*px,subsiz(2));
