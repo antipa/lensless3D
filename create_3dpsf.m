@@ -86,7 +86,7 @@ suby = -wy/2:px:wy/2;
 
 % Now that focal length is known, compute the average aperture
 % Need to take into account magnification?
-Res = .03;   %Desired image space frequencies
+Res = .04;   %Desired image space frequencies
 Res_main1 = Res; %*Z/abs(z1);   %Spot size at sensor
 Res_main2 = Res;  %*Z/abs(z2);
 Fnum1 = Res_main1/1.22/lambda;
@@ -159,10 +159,11 @@ for n = 1:length(lens_centers)
     end
 
 end
+lenslet_surface = lenslet_surface - mean2(lenslet_surface);
 
 %%
-
-
+lenslet_phase = zeros(size(aperture));
+lenslet_phase(aperture) = exp(-1i*2*pi*dn/lambda * lenslet_surface);
 tic
 k = 2*pi/lambda;
 %rg = sqrt(Xm.^2+Ym.^2+Z^2);
@@ -186,18 +187,20 @@ if gpu
 end
 Rf = ifftshift(sqrt(Fx.^2 + Fy.^2));
 Hf(Rf>(1/lambda)) = 0;
-%imagesc(abs(angle(Hf).*abs(Hf)));%
+
 %%
-ffiltx = sin(Fx*pi/max(Fx(:)))./(Fx.*pi/max(Fx(:)));
-ffilty = sin(Fy*pi/max(Fy(:)))./(Fy.*pi/max(Fy(:)));
-ffilt = (ffiltx.*ffilty).^2;
-ffilt = ifftshift(ffilt);
-ffilt(isnan(ffilt)) = 1;
+% ffiltx = sin(Fx*pi/max(Fx(:)))./(Fx.*pi/max(Fx(:)));
+% ffilty = sin(Fy*pi/max(Fy(:)))./(Fy.*pi/max(Fy(:)));
+% ffilt = (ffiltx.*ffilty).^2;
+% ffilt = ifftshift(ffilt);
+% ffilt(isnan(ffilt)) = 1;
 %Hf = ffilt.*Hf;
+h_random = zeros(1024, 1280, length(zi_vec));
 for n = 1:length(zi_vec)
-    zi = zi_vec(end-n);
+    tic
+    zi = zi_vec(end-n+1);
     R = sign(zi)*sqrt(Xm.^2+Ym.^2+zi.^2);
-    Ui = exp(-1i*2*pi/lambda*R).*aperture;
+    Ui = exp(-1i*2*pi/lambda*R).*aperture.*lenslet_phase;
     %Ui = zeros(size(R));
     %Ui(667, 667-6) = 1;
     %Ui(667, 667) = 1;
@@ -217,22 +220,86 @@ for n = 1:length(zi_vec)
     %Ui = ifftshift(Ui);
     toc
     %p = ifftshift(ifft2(ifftshift((Ui.*Hf))));
-    imagesc(abs(Ui).^2);
+    d = imresize(gather(abs(Ui)).^2,[2048 2048]/2,'box');
+    h_random(:,:,n) = padarray(d,[0 128],'both');
+    imagesc(h_random(:,:,n));
     axis image
     drawnow
+    tleft = toc*(length(zi_vec)-n);
+    fprintf('%.1f seconds remaining...\n',tleft)
+end
+%% Make correlation plots
+axial = zeros(size(h_random,3),1);
+zstackg = zeros(size(h_random));
+for n = 1:size(h_random,3)
+    zstackg(:,:,n) = h_random(:,:,n)/norm(h_random(:,:,n),'fro');
 end
 
+for n = 1:size(zstackg,3)
+    axial(n) = sum(sum(zstackg(:,:,100).*zstackg(:,:,n)));
+    subplot(1,2,2)
+    plot(zin.z,axial)
+    drawnow
+end
+%%
+xvec = (1:size(h_random,2))-round(size(h_random,2)/2);
+
+xcorr_fft = @(x1,x2)real(ifftshift(ifft2(fft2(x1).*conj(fft2(x2)))));
+acorr_near = xcorr_fft(zstackg(:,:,1),zstackg(:,:,1));
+[rmx,cmx] = find(acorr_near==max(acorr_near(:)));
+acorr_far = xcorr_fft(zstackg(:,:,end),zstackg(:,:,end));
+xcorr_nearfar = xcorr_fft(zstackg(:,:,end),zstackg(:,:,1));
+figure(2),clf
+subplot(1,3,1)
+plot(xvec,acorr_near(rmx,:))
+hold on
+plot(xvec,acorr_far(rmx,:));
+xlabel('\Delta x')
+
+ylabel('correlation')
+title('lateral correlation')
+ylim([0 1])
+xlim([-200 200])
+
+grid on
+legend('near','far')
+hold off
+
+subplot(1,3,2)
+plot(zin.z,axial)
+hold on
+
+axis tight
+grid on
+xlabel('\Delta z')
+title('axial correlation')
+ylim([0 1])
+hold off
+
+subplot(1,3,3)
+plot(xvec,xcorr_nearfar(rmx,:))
+ylim([0 1])
+title('cross correlation')
+xlabel('\Delta x')
+xlim([-200 200])
+
+grid on
+
 %% Prepare volume
+
+
 im_file = 'isl1actinCy3Top3_isl1.tif';
 stack_info = imfinfo(im_file);
 K = numel(stack_info);
 ds_lateral = 1/2;   %Downsample factors
 ds_axial = 1/2;
-im_stack = zeros(ds_lateral*stack_info(1).Height,...
-    ds_lateral*stack_info(1).Width,...
-    ds_axial*K);
-for k = 1:K*ds_axial
-    im_stack(:,:,k) = imresize(double(imread(im_file,k,'Info',stack_info)),ds_lateral,'box');
+im_stack = zeros(512,640,64);
+for k = 1:2:64
+    im_stack(:,:,k) = padarray(imresize(double(imread(im_file,k,'Info',stack_info)),...
+        [512 512],'box'),[0 64],'both');
+    imagesc(im_stack(:,:,k))
+    axis image
+    drawnow
 end
 density = 5;   %
 cutoff = prctile(im_stack(:),100-density);

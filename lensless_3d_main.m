@@ -8,12 +8,12 @@ ht = double(h_in.zstackg);
 
 start_ds = ceil(start_plane*dsz);
 P = floor(size(ht,3)*dsz*1);
-htd = zeros(size(ht,1),size(ht,2),P-start_ds);
+htd = zeros(size(ht,1),size(ht,2),P-start_ds+1);
 count = 0;
-for k = 1:(P-start_ds)   %Downsample in z. This leaves of remainders intead of using them!
+for k = 1:(P-start_ds+1)   %Downsample in z. This leaves of remainders intead of using them!
     for n = 1:1/dsz
         count = count+1;
-        htd(:,:,k) = htd(:,:,k)+ht(:,:,count+start_plane)*ds;
+        htd(:,:,k) = htd(:,:,k)+ht(:,:,count+start_plane-1)*dsz;
     end
     
 end
@@ -24,7 +24,7 @@ imtest = imresize(htd(:,:,1),ds,'box');
 h = zeros(M,N,size(htd,3));
 
 
-for m = 1:P-start_ds
+for m = 1:P-start_ds+1
     
     h(:,:,m) = imresize(htd(:,:,m)-mean2(htd(1:100,1:100,m)),ds,'box'); 
     %if m == 1
@@ -77,16 +77,31 @@ Aadj_3d = @(x,Atb)A_adj_lensless_3d(h,x,crop,pad,gputrue);
 
 switch lower(meas_type)
     case 'simulated'
-        obj = gpuArray(zeros(size(h)));
-        obj(270,320,10) = 1;
-        obj(270,320,12) = 1;
+        obj_in = load(fake_im,'im_stack');
+        obju = obj_in.im_stack;
+        count = 0;
+        obj = zeros(size(obju,1)*ds/.5,size(obju,2)*ds/.5,size(obju,3)*dsz/.5);
+        for k = 1:size(obj,3)   %Downsample in z. This leaves of remainders intead of using them!
+            for n = 1:1/dsz/2
+                count = count+1;
+                %obj(:,:,k) = obj(:,:,k)+...
+                    %cat(1,zeros(14,320),imresize(obju(:,:,count),ds/.5,'box')*dsz);
+                    obj(:,:,k) = obj(:,:,k)+imresize(obju(:,:,count),ds/.5,'box')*dsz;
+            end
+
+        end
+        density = 1;   %
+        cutoff = prctile(obj(:),100-density);
+        obj = obj.*(obj>cutoff);
+        %obj(270,320,10) = 1;
+        %obj(270,320,12) = 1;
         %obj(270/2,320/2,10) = 1;
         %obj(270/2,320/2,20) = 1;
         %obj(100,300,50) = 1;
         %obj(200,100,100)  = 1;
         %obj(250,400,20) = 1;
         b = A3d(obj);
-        b = b + abs(randn(size(b)))*max(b(:))/100;
+        %b = b + abs(randn(size(b)))*max(b(:))/100;
     case 'measured'
         bin = imread(file_to_process);   %Read image
         if demosaic_true
