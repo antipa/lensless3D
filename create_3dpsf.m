@@ -10,15 +10,15 @@ z1 = -max(zin.z);
 z2 = -min(zin.z);
 
 f = 2/(-1/z1-1/z2);
-wx = 7;   %Width of aperture in mm
-wy = 7;   %Height of aperture in mm
+wx = 1;   %Width of aperture in mm
+wy = 1;   %Height of aperture in mm
 
 lens_ca = sqrt(wx^2+wy^2);
 fno = f/lens_ca;
 
 
 
-%% Compute wavefront curvatures
+ %Compute wavefront curvatures
 z1i = 1/(-1/z1-1/f);   %Apparent position of z1
 z2i = 1/(-1/z2-1/f);   %Apparent position of z2
 
@@ -33,14 +33,14 @@ px = lambda_max/2;   %Propagation pixel size, account for diagonal
 
 
 
-%% Setup camera specs
+% Setup camera specs
 sensor_ds = 1/4;
 cpx = .0065/sensor_ds; %Camera pixel size in microns
 sensor_pix = [2048 2048]*sensor_ds;   %number of pixels
 sensor_size = sensor_pix*cpx;   %mm
 zi_vec = 1./(1./zin.z-1/f);   %Apparent position of z1
-Z = 10;  %mask-sensor distance
-%% Create random lenslet surface
+Z = 40;  %mask-sensor distance
+% Create random lenslet surface
 
 % Find the optimal lenslet focal length such that the image of the point
 % sources through the main lens is defocused symmetrically about the
@@ -52,7 +52,7 @@ l2 = 1/z1i;
 a = 2*Z;
 b = (2*Z*(l1+l2)-2);
 c = l1*l2*2*Z-l1-l2;
-phi_start = (-b+sqrt(b^2-4*a*c))/(2*a);
+phi_star = (-b+sqrt(b^2-4*a*c))/(2*a);
 f_micro = 1/phi_star;   %Lens focal length     
 
 % Now that focal length is known, compute the average aperture
@@ -65,19 +65,19 @@ Fnum2 = Res_main2/1.22/lambda;
 D1 = f_micro/Fnum1;
 D2 = f_micro/Fnum2;
 D_mean = D1/2+D2/2;
-
-switch lower(lenslet_distribution)
-    case('uniform')
-        nlenslets = round(prod(mask_size/D_mean));
-        lens_centers = randsample(subsiz(1)*subsiz(2),nlenslets);
-        [rows,cols] = ind2sub(subsiz,lens_centers);
-    case('poisson')
-        pts = poissonDisc(subsiz,D_mean/px*2/3,0,0);
-        rows = pts(:,1);
-        cols = pts(:,2);
-        nlenslets = numel(rows);
-end
-%% Propagate
+lenslet_distribution = 'uniform';
+% switch lower(lenslet_distribution)
+%     case('uniform')
+%         nlenslets = round(prod(mask_size/D_mean));
+%         lens_centers = randsample(subsiz(1)*subsiz(2),nlenslets);
+%         [rows,cols] = ind2sub(subsiz,lens_centers);
+%     case('poisson')
+%         pts = poissonDisc(subsiz,D_mean/px*2/3,0,0);
+%         rows = pts(:,1);
+%         cols = pts(:,2);
+%         nlenslets = numel(rows);
+% end
+% Propagate
 
 
 
@@ -102,23 +102,31 @@ Rmask = sqrt(Xm.^2+Ym.^2);
 aperture = abs(Xm)<wx/2 & abs(Ym)<wy/2;
 
 tic
-
-
-Hf = ifftshift(exp(1i*2*pi*Z/lambda * sqrt(1-(lambda*Fx).^2 - (lambda*Fy).^2)));
-if gpu
-    Ui = gpuArray(Ui);
-    Hf = gpuArray(Hf);
-end
-Rf = sqrt(Fx.^2 + Fy.^2);
-Hf(Rf>1/lambda) = 0;
-
+k = 2*pi/lambda;
+rg = sqrt(Xm.^2+Ym.^2+Z^2);   %Radius for real space green function
+hg = ifftshift((k/2/pi/1i).*(exp(1i*k*rg)./rg) .* (1+1i./(k*rg)) .* Z./rg);
+%Hf = ifftshift(exp(1i*2*pi*Z/lambda * sqrt(1-(lambda*Fx).^2 - (lambda*Fy).^2)));
+Hf = (fft2(hg));
+%if gpu
+%    Hf = gpuArray(Hf);
+%end
+%Rf = sqrt(Fx.^2 + Fy.^2);
+%Hf(Rf>1/lambda) = 0;
+%ffiltx = sin(Fx*pi/max(Fx(:)))./(Fx.*pi/max(Fx(:)));
+%ffilty = sin(Fy*pi/max(Fy(:)))./(Fy.*pi/max(Fy(:)));
+%ffilt = (ffiltx.*ffilty).^2;
+%ffilt = fftshift(ffilt);
+%Hf = ffilt.*Hf;
 for n = 1:length(zi_vec)
-    zi = zi_vec(n);
+    zi = zi_vec(n)*1e16;
     R = sign(zi)*sqrt(Xm.^2+Ym.^2+zi.^2);
     Ui = exp(-1i*2*pi/lambda*R).*aperture;
-    if gpu
-        Ui = gpuArray(Ui);
-    end
+    %Ui = zeros(size(R));
+    %Ui(667, 667) = 1;
+    %Ui(667, 667 + 2) = 1;
+   % if gpu
+    %    Ui = gpuArray(Ui);
+    %end
     Ui = fft2(Ui);
     %Ui = gpuArray(Hf.*Ui);%gather(fftshift(fft2(fftshift(Ui)))));
     %Ui = gpuArray(Hf.*Ui);
