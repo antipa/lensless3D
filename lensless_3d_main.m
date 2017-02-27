@@ -24,7 +24,7 @@ imtest = imresize(htd(:,:,1),ds,'box');
 h = zeros(M,N,size(htd,3));
 
 
-for m = 1:P-start_ds+1
+for m = 1:(P-start_ds+1)
     
     h(:,:,m) = imresize(htd(:,:,m)-mean2(htd(1:100,1:100,m)),ds,'box'); 
     %if m == 1
@@ -50,6 +50,8 @@ end
 %z = h_in.z;
 
 %%
+lensless3d_settings
+
 %define problem size
 NX = size(h,2);
 NY = size(h,1);
@@ -90,11 +92,11 @@ switch lower(meas_type)
             end
 
         end
-        density = 1;   %
+        density = 10;   %
         cutoff = prctile(obj(:),100-density);
         obj = obj.*(obj>cutoff);
-        %obj(270,320,10) = 1;
         %obj(270,320,12) = 1;
+        %obj(270,320,10) = 1;
         %obj(270/2,320/2,10) = 1;
         %obj(270/2,320/2,20) = 1;
         %obj(100,300,50) = 1;
@@ -102,6 +104,11 @@ switch lower(meas_type)
         %obj(250,400,20) = 1;
         b = A3d(obj);
         %b = b + abs(randn(size(b)))*max(b(:))/100;
+        figure(3),clf
+        imagesc(max(obj,[],3))
+        axis image
+        colormap parula
+        figure(1)
     case 'measured'
         bin = imread(file_to_process);   %Read image
         if demosaic_true
