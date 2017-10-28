@@ -15,7 +15,7 @@ This code is meant to work with proxMin (Github: antipa/proxMin). proxMin needs 
 First, a gradient handle that computes two outputs: the data fidelity term, norm(Ax-b), as well as a gradient. 
 For a linear problem, this is A’(Ax-b), but can be anything you want. 
 
-Second, a proximal operator. This must output the despised approximation to the input as well as the associated 
+Second, a proximal operator. This must output the denoised approximation to the input as well as the associated 
 norm. See antipa/proxMin for more details
 
 Files:
