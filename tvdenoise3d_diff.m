@@ -48,7 +48,7 @@ if lambda < 0
     error('Parameter lambda must be nonnegative.');
 end
 
-tau = 0.125/2;
+tau = 0.125;
 
 N = size(f);
 % 
