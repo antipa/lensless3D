@@ -13,7 +13,7 @@ function b = A_lensless_3d(h,x,pad,crop,gputrue)
 if gputrue
     B = gpuArray(complex(zeros(2*size(h,1),2*size(h,2))));
 else
-    B = complex(2*zeros(size(h,1),2*size(h,2)));
+    B = complex(zeros(size(pad(h(:,:,1)))));
 end
 
 for m = 1:size(h,3)

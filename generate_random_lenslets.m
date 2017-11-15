@@ -26,14 +26,14 @@
 
 
 
-lenslet_distribution = 'poisson';
+lenslet_distribution = 'uniform';
 lambda = 550e-6;
-f = 7.5; %Focal length of each lenslet
-cpx = .0065; %Camera pixel size in microns
-sensor_pix = [1000 1200];
-sensor_size = [2048*cpx 2560*cpx];  %mm
+f = .3; %Focal length of each lenslet in mm
+cpx = .001; %Camera pixel size in mm
+sensor_pix = [1024 1200];
+sensor_size = [2048*cpx 2560*cpx]/2;  %mm
 mask_pix = [1024 1280];
-mask_size = mask_pix*cpx; %mm
+mask_size = mask_pix*cpx/2; %mm
 upsample = 3;   %how much to upsample for propagation
 subsiz = upsample*mask_pix;  %Size of CA in pixels
 px = mask_size(1)/subsiz(1);
@@ -63,7 +63,7 @@ end
 %%
 
 
-nlenslets = 500;
+nlenslets = 200;
 lens_centers = randsample(subsiz(1)*subsiz(2),nlenslets);
 [rows,cols] = ind2sub(subsiz,lens_centers);
 
@@ -86,7 +86,7 @@ pts = poissonDisc(subsiz,D_samp,0,0);
 
 x0 = (pts - floor(subsiz/2))*px;
 
-sph = @(x0,y0,R)sqrt(R^2-(Xs-x0).^2 - (Ys-y0).^2);
+sph = @(x0,y0,R)real(sqrt(R^2-(Xs-x0).^2 - (Ys-y0).^2));
 
 
 lenslet_surface = zeros(subsiz);
