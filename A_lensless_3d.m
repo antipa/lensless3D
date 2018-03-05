@@ -10,13 +10,17 @@ function b = A_lensless_3d(h,x,pad,crop,gputrue)
 %
 % Output: estimate of sensor data
 %Initialize empty array in frequency domain
-if gputrue
-    B = gpuArray(complex(zeros(2*size(h,1),2*size(h,2))));
-else
-    B = complex(2*zeros(size(h,1),2*size(h,2)));
-end
+% if gputrue
+%     B = gpuArray(complex(zeros(2*size(h,1),2*size(h,2))));
+% else
+%     B = complex(2*zeros(size(h,1),2*size(h,2)));
+% end
 
 for m = 1:size(h,3)
-    B = B+fft2(pad(x(:,:,m))).*fft2(pad(h(:,:,m)));
+    if m == 1
+        B = fft2(pad(x(:,:,m))).*fft2(pad(h(:,:,m)));
+    else
+        B = B+fft2(pad(x(:,:,m))).*fft2(pad(h(:,:,m)));
+    end
 end
 b = crop(ifftshift(real(ifft2(B))));

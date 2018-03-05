@@ -1,36 +1,23 @@
-%% Setup simulation grid and camera grid
-% camera.resolution = [2048/2 2560/2];   %Size of camera in pixels
-% camera.px = 6.5e-3*2;    %Pixel size in [physical_units]/pixel
-% camera.units = 'mm';   %Physical units
-% camera.resample = @(x)imresize(x,camera.resolution,'box');  %Method to resample onto camera pixel grid
-% camera.size = camera.resolution*camera.px;    %Physical extent of sensor
-% 
-% opticSurf(1).resolution = 3*camera.resolution;   %Mask-modeling grid
-% opticSurf(1).px = camera.size./mask.resoluion;   %mask pixel size determined from camera extent
-% opticSurf(1).t = .8;    %Propagation distance from mask to sensor
-% opticSurf(1).n = 1.61;
-% opticSurf(1).z = zeros(mask.resolution);   %Surface height on x-y grid
-% opticSurf(1).amp = ones(mask.resolution);  %Transmission mask
-% opticSurf(1).transmit_field = @(u).opticSurf(1).amp.*u.*
-% 
-% opticSurf(2) = opticSurf(1);   %Inheret properties from input surface
-% %Modify relevant ones
-% opticSurf(2).t = 10;
-% opticSurf(2).n = 1;
-% opticSurf(2).type = 'randomLenslets';
-% opticSurf(2).f = 7.5;    %Set focal length of features
-% opticSurf(2).NA = .05;   %Set NA (or average NA) of features
-% opticSurf(2).amp = (-opticSurf)*()';
-
-
-
-
 lenslet_distribution = 'poisson';
-lambda = 550e-6;
-f = 7.5; %Focal length of each lenslet
-cpx = .0065; %Camera pixel size in microns
-sensor_pix = [1000 1200];
-sensor_size = [2048*cpx 2560*cpx];  %mm
+% Calculate lenslet focal length so that middle of volume images to sensor
+
+l1 = 1/z2i;
+l2 = 1/z1i;
+% The +ve solution to this causes the extremal planes of the volume to be
+% defocused by the same magnitude on either side of the focal plane
+% lenslet_power = 2*Z*phi.^2+(2*Z*(l1+l2)-2)*phi + l1*l2*2*Z-l1-l2; 
+a = 2*Z;
+b = (2*Z*(l1+l2)-2);
+c = l1*l2*2*Z-l1-l2;
+phi_start = (-b+sqrt(b^2-4*a*c))/(2*a);
+%[~,idx] = min(abs(lenslet_power));                       
+%phi_star = phi(idx);
+%%
+f_micro = 1/phi_star; %Focal length of each lenslet
+sensor_ds = 1/4;
+cpx = .0065/sensor_ds; %Camera pixel size in microns
+sensor_pix = [2048 2560]*sensor_ds;   %number of pixels
+sensor_size = sensor_pix*cpx;   %mm
 mask_pix = [600 800];
 mask_size = mask_pix*cpx; %mm
 upsample = 3;   %how much to upsample for propagation
@@ -42,7 +29,7 @@ Fnum = Res/1.22/lambda;
 %Fnum = obj_dist/D_mean
 obj_dist = 15; %Distance to center of object
 D_mean = obj_dist/Fnum;
-im_dist = 1/(1/f-1/obj_dist);
+im_dist = 1/(1/f_micro-1/obj_dist);
 
 
 %%
@@ -64,7 +51,7 @@ end
 index = 1.51;
 index_prime = 1;
 dn = index_prime-index;
-R = f*dn;
+R = f_micro*dn;
 %Sphere: z = sqrt(1-(x-x0)^2/R^2 + (y-y0)^2/R^2)
 suby = linspace(-floor(subsiz(1)/2)*px,floor(subsiz(1)/2)*px,subsiz(1));
 subx = linspace(-floor(subsiz(2)/2)*px,floor(subsiz(2)/2)*px,subsiz(2));

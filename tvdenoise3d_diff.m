@@ -51,26 +51,33 @@ end
 tau = 0.125;
 
 N = size(f);
+% 
+% p1 = zeros(size(f));
+% p2 = zeros(size(f));
+% p3 = zeros(size(f));
 
-p1 = zeros(size(f));
-p2 = zeros(size(f));
-p3 = zeros(size(f));
-
-divp = zeros(size(f));
+%divp = zeros(size(f));
 
 for i=1:iters
-   
-    z = divp - f*lambda;
+    if i == 1
+        z = -f*lambda;
+    else       
+        z = divp - f*lambda;
+    end
     
     z1 = circshift(z,[0 -1 0])-z;
     z2 = circshift(z,[-1 0 0])-z;
     z3 = circshift(z,[0 0 -1])-z;
     denom = 1 + tau*sqrt(z1.^2 + z2.^2 + z3.^2);
-    
-    p1 = (p1 + tau*z1)./denom;
-    p2 = (p2 + tau*z2)./denom;
-    p3 = (p3 + tau*z3)./denom;
-
+    if i == 1
+        p1 = (tau*z1)./denom;
+        p2 = (tau*z2)./denom;
+        p3 = (tau*z3)./denom;
+    else
+        p1 = (p1 + tau*z1)./denom;
+        p2 = (p2 + tau*z2)./denom;
+        p3 = (p3 + tau*z3)./denom;
+    end
     divp = p1 - circshift(p1,[0 1 0]) + ...
         p2 - circshift(p2,[1 0 0]) + ...
         p3 - circshift(p3,[0 0 1]);

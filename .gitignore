@@ -1,11 +1,8 @@
 lensless_3d_main.m
 *.asv
-*.asv
-lensless3d_settings.m
-lensless3d_settings.m
 lensless3d_settings.m
 *.mat
-
 random_lenslet_image.png
 
-random_lenslet_stack.gif
+*.gif
+*.avi
