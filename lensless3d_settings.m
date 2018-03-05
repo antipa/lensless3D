@@ -28,7 +28,7 @@ niters = 50;    %TV iterations (typically more than 15 are needed, 50 gives the 
 prox_handle = @(x)soft_nonneg(x,soft_tau);
 
 demosaic_true = 1;   %Demosaic raw data or not. Leave set to 1 for .png inputs from PCO
-
+im_background = 100;    %Constant bias to be subtracted from images before processing
 %----------------------------------------------------
 %Options for proxMin
 % Manually pick the stepsize. It varies with both lateral and axial

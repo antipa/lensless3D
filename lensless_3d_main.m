@@ -25,19 +25,14 @@ imtest = imresize(htd(:,:,1),ds,'box');
 [M,N] = size(imtest);
 h = zeros(M,N,size(htd,3));
 
+divide_norm = 0;
+for m = 1:(P-start_ds+1)
+    h(:,:,m) = imresize(htd(:,:,m)-im_background,ds,'box');  
+    divide_norm = max(divide_norm,norm(h(:,:,m),'fro'));
+end
 
 for m = 1:(P-start_ds+1)
-    
-    h(:,:,m) = imresize(htd(:,:,m)-mean2(htd(1:100,1:100,m)),ds,'box'); 
-    if m == 1
-        divide_norm = norm(h(:,:,m),'fro');
-    end
     h(:,:,m) = h(:,:,m)/divide_norm;
-    %imagesc(h(:,:,m))
-    %axis image
-    %caxis([0 2^13])
-    %drawnow
-   % nn(m) = sum(sum(h(:,:,m)));
 end
 %clear ht;
 %clear htd;
