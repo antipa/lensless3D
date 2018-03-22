@@ -34,8 +34,7 @@ end
 for m = 1:(P-start_ds+1)
     h(:,:,m) = h(:,:,m)/divide_norm;
 end
-%clear ht;
-%clear htd;
+
 %Subtract scmos camera bias
 if gputrue  
     h = gpuArray(h);
