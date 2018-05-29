@@ -68,6 +68,7 @@ for i=1:iters
     z1 = circshift(z,[0 -1 0])-z;
     z2 = circshift(z,[-1 0 0])-z;
     z3 = circshift(z,[0 0 -1])-z;
+   
     denom = 1 + tau*sqrt(z1.^2 + z2.^2 + z3.^2);
     if i == 1
         p1 = (tau*z1)./denom;
@@ -79,8 +80,9 @@ for i=1:iters
         p3 = (p3 + tau*z3)./denom;
     end
     divp = p1 - circshift(p1,[0 1 0]) + ...
-        p2 - circshift(p2,[1 0 0]) + ...
+       p2 - circshift(p2,[1 0 0]) + ...
         p3 - circshift(p3,[0 0 1]);
+     
 end
 
 u = f - divp/lambda;

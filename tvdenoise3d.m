@@ -44,7 +44,7 @@ if lambda < 0
     error('Parameter lambda must be nonnegative.');
 end
 
-tau = 0.25;
+tau = 1/12;
 
 N = size(f);
 id = [2:N(1),N(1)];

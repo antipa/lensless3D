@@ -3,7 +3,7 @@ function Atb = A_adj_lensless_3d(h,x,crop,pad,gputrue)
 % inputs: see A
 %
 if gputrue
-    Atb = gpuArray(zeros(size(h)));
+    Atb = gpuArray(single(zeros(size(h))));
 else
     Atb = zeros(size(h));
 end

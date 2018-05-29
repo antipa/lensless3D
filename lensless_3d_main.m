@@ -41,7 +41,7 @@ end
 %clear htd;
 %Subtract scmos camera bias
 if gputrue  
-    h = gpuArray(h);
+    h = gpuArray(single(h));
 else
     h = h;
 end
@@ -95,6 +95,7 @@ switch lower(meas_type)
         density = 10;   %
         cutoff = prctile(obj(:),100-density);
         obj = obj.*(obj>cutoff);
+        %obj = cat(1,obj,zeros(14,320,32));
         %obj(270,320,12) = 1;
         %obj(270,320,10) = 1;
         %obj(270/2,320/2,10) = 1;
@@ -102,7 +103,8 @@ switch lower(meas_type)
         %obj(100,300,50) = 1;
         %obj(200,100,100)  = 1;
         %obj(250,400,20) = 1;
-        b = A3d(obj);
+        options.xin = obj;
+        b = awgn(A3d(obj),30);
         %b = b + abs(randn(size(b)))*max(b(:))/100;
         figure(3),clf
         imagesc(max(obj,[],3))
@@ -132,7 +134,7 @@ GradErrHandle = @(x) linear_gradient(x,A3d,Aadj_3d,b);
 switch lower(init_style)
     case('zero')
         if gputrue
-            [xhat, funvals] = proxMin(GradErrHandle,prox_handle,gpuArray(zeros(size(h))),b,options);
+            [xhat, funvals] = proxMin(GradErrHandle,prox_handle,gpuArray(single(zeros(size(h)))),b,options);
         else
             [xhat, funvals] = proxMin(GradErrHandle,prox_handle,(zeros(size(h))),b,options);
         end
