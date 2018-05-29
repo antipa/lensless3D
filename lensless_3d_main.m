@@ -1,44 +1,40 @@
-%Load impulse response stack, h
+ %Load impulse response stack, h
 lensless3d_settings;  %Loads settings includnig file paths
 h_in = load(impulse_stack,stack_name);
 %%
 
 lensless3d_settings;
-ht = double(h_in.zstackg);
+ht = double(h_in.(stack_name));
 
-start_ds = ceil(start_plane*dsz);
-P = floor(size(ht,3)*dsz*1);
-htd = zeros(size(ht,1),size(ht,2),P-start_ds+1);
+start_ds = max(ceil(start_plane*dsz),1);
+P = floor(size(ht,3)*dsz);
+end_ds = min(round(end_plane*dsz),P);
+htd = zeros(size(ht,1),size(ht,2),P);
 count = 0;
-for k = 1:(P-start_ds+1)   %Downsample in z. This leaves of remainders intead of using them!
+for k = 1:P   %Downsample in z. This leaves of remainders intead of using them!
     for n = 1:1/dsz
         count = count+1;
-        htd(:,:,k) = htd(:,:,k)+ht(:,:,count+start_plane-1)*dsz;
+        htd(:,:,k) = htd(:,:,k)+ht(:,:,count)*dsz;
     end
-    
 end
 
+htd = htd(:,:,start_ds:end_ds);
+size(htd)
 
 imtest = imresize(htd(:,:,1),ds,'box');
 [M,N] = size(imtest);
 h = zeros(M,N,size(htd,3));
 
+divide_norm = 0;
+for m = 1:(P-start_ds+1)
+    h(:,:,m) = imresize(htd(:,:,m)-im_background,ds,'box');  
+    divide_norm = max(divide_norm,norm(h(:,:,m),'fro'));
+end
 
 for m = 1:(P-start_ds+1)
-    
-    h(:,:,m) = imresize(htd(:,:,m)-mean2(htd(1:100,1:100,m)),ds,'box'); 
-    %if m == 1
-        divide_norm = norm(h(:,:,m),'fro');
-    %end
     h(:,:,m) = h(:,:,m)/divide_norm;
-    %imagesc(h(:,:,m))
-    %axis image
-    %caxis([0 2^13])
-    %drawnow
-   % nn(m) = sum(sum(h(:,:,m)));
 end
-%clear ht;
-%clear htd;
+
 %Subtract scmos camera bias
 if gputrue  
     h = gpuArray(single(h));
@@ -120,7 +116,7 @@ switch lower(meas_type)
         else
             b = double(bin);
         end
-        b = (imresize(b,ds/2,'box'))-300;   %Always downsample by 2
+        b = (imresize(b,ds/2,'box'))-100;   %Always downsample by 2
         
             
         if gputrue
