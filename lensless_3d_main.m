@@ -113,10 +113,11 @@ switch lower(meas_type)
             b = double(demosaic(bin,'rggb'));
             %b = mean(b,3);
             b = b(:,:,2);
+            b = (imresize(b,ds/2,'box'))-im_background;   %Always downsample by 2
         else
-            b = double(bin);
+            b = imresize(double(bin),ds,'box')-im_background;
         end
-        b = (imresize(b,ds/2,'box'))-100;   %Always downsample by 2
+        
         
             
         if gputrue
